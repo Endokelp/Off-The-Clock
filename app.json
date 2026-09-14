@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Off the Clock",
+    "slug": "off-the-clock",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "offtheclock",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.endokelp.offtheclock",
+      "adaptiveIcon": {
+        "backgroundColor": "#101418",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": ["expo-router"]
+  }
+}

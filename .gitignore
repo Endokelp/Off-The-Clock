@@ -12,3 +12,8 @@ ios/
 .DS_Store
 *.apk
 *.aab
+
+# Expo generated
+expo-env.d.ts
+.metro-health-check*
+*.tsbuildinfo
