@@ -1,4 +1,4 @@
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Divider, FAB, List, Text, useTheme } from 'react-native-paper';
@@ -98,16 +98,16 @@ export default function Home() {
             {[...shifts]
               .sort((a, b) => b.date.localeCompare(a.date))
               .map((shift) => (
-                <Link key={shift.id} href={{ pathname: '/shift', params: { id: shift.id } }} asChild>
-                  <List.Item
-                    title={shift.employer || 'Shift'}
-                    description={`${dayLabel(shift.date)}, ${formatHours(
-                      shift.endMinutes - shift.startMinutes - shift.mealBreakMinutes,
-                    )}`}
-                    right={(props) => <List.Icon {...props} icon="chevron-right" />}
-                    style={styles.row}
-                  />
-                </Link>
+                <List.Item
+                  key={shift.id}
+                  title={shift.employer || 'Shift'}
+                  description={`${dayLabel(shift.date)}, ${formatHours(
+                    shift.endMinutes - shift.startMinutes - shift.mealBreakMinutes,
+                  )}`}
+                  right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                  onPress={() => router.push({ pathname: '/shift', params: { id: shift.id } })}
+                  style={styles.row}
+                />
               ))}
           </View>
         )}
