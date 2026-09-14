@@ -5,6 +5,7 @@ import {
   ageOn,
   assess,
   formatDollars,
+  formatHours,
   minutesWorkedIn,
   weekStartOf,
   type Profile,
@@ -255,4 +256,29 @@ test('an adult is not held to the minor hour caps', () => {
   assert.ok(!found.includes('daily-hours'));
   assert.ok(!found.includes('started-too-early'));
   assert.ok(!found.includes('ended-too-late'));
+});
+
+test('the wage floor is reported once for the whole log, not once per shift', () => {
+  const underpaid: Profile = { ...profile, hourlyWage: 16.5 };
+  const threeShifts = [0, 1, 2].map((offset) =>
+    shift({
+      id: `s${offset}`,
+      date: `2026-07-1${3 + offset}`,
+      startMinutes: 10 * 60,
+      endMinutes: 14 * 60,
+    }),
+  );
+  const found = assess(threeShifts, underpaid).violations.filter(
+    (violation) => violation.code === 'below-minimum-wage',
+  );
+  assert.equal(found.length, 1);
+  // Twelve paid hours short by 0.63 an hour is 7.56 dollars.
+  assert.equal(found[0].owedCents, 756);
+  assert.match(found[0].headline, /\$17\.13/);
+});
+
+test('hours under one hour read as minutes alone', () => {
+  assert.equal(formatHours(30), '30m');
+  assert.equal(formatHours(60), '1h');
+  assert.equal(formatHours(90), '1h 30m');
 });

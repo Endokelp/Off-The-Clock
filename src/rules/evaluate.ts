@@ -143,6 +143,7 @@ const formatClock = (minutes: number) => {
 export const formatHours = (minutes: number) => {
   const whole = Math.floor(minutes / 60);
   const rest = minutes % 60;
+  if (whole === 0) return `${rest}m`;
   return rest === 0 ? `${whole}h` : `${whole}h ${rest}m`;
 };
 
@@ -202,7 +203,7 @@ const evaluateShift = (shift: Shift, profile: Profile, schoolWeek: boolean): Vio
       code: 'missed-rest-break',
       headline: `${missedRest} paid rest ${missedRest === 1 ? 'break' : 'breaks'} you never got`,
       detail:
-        `A ${formatHours(worked)} shift owes you ${owedRest} rest ` +
+        `This ${formatHours(worked)} shift owes you ${owedRest} rest ` +
         `${owedRest === 1 ? 'break' : 'breaks'}. Rest breaks are on the employer clock, so ` +
         'working through them is unpaid work.',
       citation: limits.restCitation,
@@ -255,23 +256,49 @@ const evaluateShift = (shift: Shift, profile: Profile, schoolWeek: boolean): Vio
     }
   }
 
-  const minimum = band === 'under16' ? minimumWage2026.under16 : minimumWage2026.adult;
-  const minimumCents = Math.round(minimum * 100);
-  if (wageCents > 0 && wageCents < minimumCents) {
-    const paidMinutes = Math.max(0, shift.endMinutes - shift.startMinutes - shift.unpaidBreakMinutes);
-    found.push({
-      ...base,
-      code: 'below-minimum-wage',
-      headline: `Paid below the ${minimum.toFixed(2)} minimum`,
-      detail:
-        `Your rate is ${profile.hourlyWage.toFixed(2)} an hour. Washington sets the floor at ` +
-        `${minimum.toFixed(2)} for your age in 2026.`,
-      citation: citations.minimumWage,
-      owedCents: centsForMinutes(paidMinutes, minimumCents - wageCents),
-    });
+  return found;
+};
+
+// The wage floor is one fact about the job, not a fact about a shift, so the shortfall is summed
+// across the whole log and reported once instead of repeating under every shift.
+const evaluateWageFloor = (shifts: readonly Shift[], profile: Profile): Violation | null => {
+  const wageCents = wageCentsOf(profile);
+  if (wageCents <= 0) return null;
+
+  let shortfallCents = 0;
+  let shortfallMinutes = 0;
+  let floorCents = 0;
+
+  for (const shift of shifts) {
+    const band = ageBandOn(profile, shift.date);
+    const minimumCents = Math.round(
+      (band === 'under16' ? minimumWage2026.under16 : minimumWage2026.adult) * 100,
+    );
+    if (wageCents >= minimumCents) continue;
+    const paidMinutes = Math.max(
+      0,
+      shift.endMinutes - shift.startMinutes - shift.unpaidBreakMinutes,
+    );
+    shortfallCents += centsForMinutes(paidMinutes, minimumCents - wageCents);
+    shortfallMinutes += paidMinutes;
+    floorCents = Math.max(floorCents, minimumCents);
   }
 
-  return found;
+  if (shortfallCents === 0) return null;
+
+  const first = shifts.find((shift) => shift.date === shifts[0].date) ?? shifts[0];
+  return {
+    shiftId: first.id,
+    date: first.date,
+    code: 'below-minimum-wage',
+    headline: `Paid below the $${(floorCents / 100).toFixed(2)} minimum`,
+    detail:
+      `Your rate is $${profile.hourlyWage.toFixed(2)} an hour. Washington sets the floor at ` +
+      `$${(floorCents / 100).toFixed(2)} for your age in 2026, across ` +
+      `${formatHours(shortfallMinutes)} of paid time in this log.`,
+    citation: citations.minimumWage,
+    owedCents: shortfallCents,
+  };
 };
 
 const evaluateWeek = (
@@ -356,6 +383,9 @@ export const assess = (shifts: readonly Shift[], profile: Profile): Assessment =
     }
     violations.push(...evaluateWeek(week, shiftsInWeek, profile));
   }
+
+  const wageFloor = evaluateWageFloor(shifts, profile);
+  if (wageFloor) violations.push(wageFloor);
 
   const unpaidMinutes = shifts.reduce(
     (total, shift) => total + Math.max(0, shift.unpaidBreakMinutes - shift.mealBreakMinutes),
