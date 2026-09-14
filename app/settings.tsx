@@ -54,9 +54,7 @@ export default function Settings() {
       mode: 'date',
       minimumDate: earliest,
       maximumDate: latest,
-      onChange: (_event, picked) => {
-        if (picked) apply(isoFrom(picked));
-      },
+      onValueChange: (_event, picked) => apply(isoFrom(picked)),
     });
   };
 
@@ -120,8 +118,8 @@ export default function Settings() {
         {weekdayNames.map((name, day) => (
           <Chip
             key={name}
+            mode="outlined"
             selected={weekdays.includes(day)}
-            showSelectedCheck={false}
             onPress={() =>
               setWeekdays(
                 weekdays.includes(day)

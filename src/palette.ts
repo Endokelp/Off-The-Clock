@@ -12,6 +12,10 @@ export const dark = {
   onSurfaceVariant: '#C2CAD2',
   outline: '#3A434C',
   error: '#FF8A80',
+  // Material 3 fills selected chips and similar controls with the secondary container. Left at
+  // the Paper default it arrives as purple, a second accent competing with the money figure.
+  selected: '#2A343D',
+  onSelected: '#E6EBF0',
 };
 
 export const light = {
@@ -24,6 +28,8 @@ export const light = {
   onSurfaceVariant: '#434C55',
   outline: '#C3CBD3',
   error: '#B3261E',
+  selected: '#DCE3E9',
+  onSelected: '#111619',
 };
 
 const channel = (value: number) =>

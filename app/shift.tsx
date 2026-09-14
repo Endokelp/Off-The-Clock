@@ -74,16 +74,14 @@ export default function ShiftForm() {
       value: new Date(`${date}T12:00:00`),
       mode: 'date',
       maximumDate: new Date(),
-      onChange: (_event, picked) => {
-        if (!picked) return;
+      onValueChange: (_event, picked) =>
         setDate(
           [
             picked.getFullYear(),
             String(picked.getMonth() + 1).padStart(2, '0'),
             String(picked.getDate()).padStart(2, '0'),
           ].join('-'),
-        );
-      },
+        ),
     });
   };
 
@@ -93,10 +91,7 @@ export default function ShiftForm() {
     DateTimePickerAndroid.open({
       value: seed,
       mode: 'time',
-      onChange: (_event, picked) => {
-        if (!picked) return;
-        apply(picked.getHours() * 60 + picked.getMinutes());
-      },
+      onValueChange: (_event, picked) => apply(picked.getHours() * 60 + picked.getMinutes()),
     });
   };
 

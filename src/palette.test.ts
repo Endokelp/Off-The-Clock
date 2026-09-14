@@ -37,6 +37,8 @@ for (const [name, scheme] of [
     const money = contrastRatio(scheme.money, scheme.background);
     const onMoney = contrastRatio(scheme.onMoney, scheme.money);
     const error = contrastRatio(scheme.error, scheme.surface);
+    const selected = contrastRatio(scheme.onSelected, scheme.selected);
+    assert.ok(selected >= bodyMinimum, `${name} selected chip label is ${selected.toFixed(2)}`);
     assert.ok(money >= largeTextMinimum, `${name} money on background is ${money.toFixed(2)}`);
     assert.ok(onMoney >= bodyMinimum, `${name} button label on accent is ${onMoney.toFixed(2)}`);
     assert.ok(error >= bodyMinimum, `${name} error on surface is ${error.toFixed(2)}`);

@@ -15,6 +15,8 @@ export const darkTheme = {
     onSurfaceVariant: dark.onSurfaceVariant,
     outline: dark.outline,
     outlineVariant: dark.outline,
+    secondaryContainer: dark.selected,
+    onSecondaryContainer: dark.onSelected,
     error: dark.error,
     elevation: { ...MD3DarkTheme.colors.elevation, level1: dark.surface, level2: dark.surfaceVariant },
   },
@@ -33,6 +35,8 @@ export const lightTheme = {
     onSurfaceVariant: light.onSurfaceVariant,
     outline: light.outline,
     outlineVariant: light.outline,
+    secondaryContainer: light.selected,
+    onSecondaryContainer: light.onSelected,
     error: light.error,
     elevation: {
       ...MD3LightTheme.colors.elevation,
