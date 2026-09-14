@@ -5,8 +5,8 @@ import {
   minimumWage2026,
   overtimePremiumMultiplier,
   overtimeThresholdHours,
-  type AgeBand,
   type Citation,
+  type WorkerBand,
 } from './law.ts';
 
 export type Shift = {
@@ -105,7 +105,7 @@ export const ageOn = (birthDate: string, isoDate: string) => {
   return age;
 };
 
-export const ageBandOn = (profile: Profile, isoDate: string): AgeBand | 'adult' => {
+export const ageBandOn = (profile: Profile, isoDate: string): WorkerBand => {
   const age = ageOn(profile.birthDate, isoDate);
   if (age >= 18) return 'adult';
   return age < 16 ? 'under16' : 'teen';
@@ -146,7 +146,7 @@ export const formatHours = (minutes: number) => {
   return rest === 0 ? `${whole}h` : `${whole}h ${rest}m`;
 };
 
-const requiredRestBreaks = (minutesWorked: number, band: AgeBand) => {
+const requiredRestBreaks = (minutesWorked: number, band: WorkerBand) => {
   const limits = breakLimits[band];
   if (minutesWorked < limits.restBreakThresholdMinutes) return 0;
   return Math.max(0, Math.ceil(minutesWorked / limits.maxMinutesBeforeRest) - 1);
@@ -154,8 +154,10 @@ const requiredRestBreaks = (minutesWorked: number, band: AgeBand) => {
 
 const evaluateShift = (shift: Shift, profile: Profile, schoolWeek: boolean): Violation[] => {
   const band = ageBandOn(profile, shift.date);
+  const limits = breakLimits[band];
   const wageCents = wageCentsOf(profile);
   const worked = minutesWorkedIn(shift);
+  const gotMeal = shift.mealBreakMinutes >= limits.requiredMealMinutes;
   const found: Violation[] = [];
 
   const base = { shiftId: shift.id, date: shift.date };
@@ -171,48 +173,44 @@ const evaluateShift = (shift: Shift, profile: Profile, schoolWeek: boolean): Vio
       detail:
         `Your pay was cut by ${shift.unpaidBreakMinutes} minutes for a break, but the log ` +
         `shows you got ${shift.mealBreakMinutes} minutes away from work.`,
-      citation: breakLimits[band === 'adult' ? 'teen' : band].mealCitation,
+      citation: limits.mealCitation,
       owedCents: centsForMinutes(dockedMinutes, wageCents),
     });
   }
 
+  if (worked > limits.maxMinutesBeforeMeal && !gotMeal) {
+    found.push({
+      ...base,
+      code: 'missed-meal-break',
+      headline: 'No meal break on a shift long enough to require one',
+      detail:
+        `You worked ${formatHours(worked)}. Your limit is ` +
+        `${formatHours(limits.maxMinutesBeforeMeal)} without an uninterrupted ` +
+        `${limits.requiredMealMinutes} minute meal break.`,
+      citation: limits.mealCitation,
+      owedCents: 0,
+    });
+  }
+
+  // Under 16 a meal break also satisfies the two hour rule, which is why it counts here.
+  const owedRest = requiredRestBreaks(worked, band);
+  const breaksReceived = shift.restBreaksTaken + (band === 'under16' && gotMeal ? 1 : 0);
+  const missedRest = Math.max(0, owedRest - breaksReceived);
+  if (missedRest > 0) {
+    found.push({
+      ...base,
+      code: 'missed-rest-break',
+      headline: `${missedRest} paid rest ${missedRest === 1 ? 'break' : 'breaks'} you never got`,
+      detail:
+        `A ${formatHours(worked)} shift owes you ${owedRest} rest ` +
+        `${owedRest === 1 ? 'break' : 'breaks'}. Rest breaks are on the employer clock, so ` +
+        'working through them is unpaid work.',
+      citation: limits.restCitation,
+      owedCents: centsForMinutes(missedRest * limits.requiredRestMinutes, wageCents),
+    });
+  }
+
   if (band !== 'adult') {
-    const limits = breakLimits[band];
-    const gotMeal = shift.mealBreakMinutes >= limits.requiredMealMinutes;
-
-    if (worked > limits.maxMinutesBeforeMeal && !gotMeal) {
-      found.push({
-        ...base,
-        code: 'missed-meal-break',
-        headline: 'No meal break on a shift long enough to require one',
-        detail:
-          `You worked ${formatHours(worked)}. At your age the limit is ` +
-          `${formatHours(limits.maxMinutesBeforeMeal)} without an uninterrupted ` +
-          `${limits.requiredMealMinutes} minute meal break.`,
-        citation: limits.mealCitation,
-        owedCents: 0,
-      });
-    }
-
-    // Under 16 a meal break also satisfies the two hour rule, which is why it counts here.
-    const breaksReceived =
-      shift.restBreaksTaken + (band === 'under16' && gotMeal ? 1 : 0);
-    const missedRest = Math.max(0, requiredRestBreaks(worked, band) - breaksReceived);
-    if (missedRest > 0) {
-      const owedMinutes = missedRest * limits.requiredRestMinutes;
-      found.push({
-        ...base,
-        code: 'missed-rest-break',
-        headline: `${missedRest} paid rest ${missedRest === 1 ? 'break' : 'breaks'} you never got`,
-        detail:
-          `A ${formatHours(worked)} shift owes you ${requiredRestBreaks(worked, band)} rest ` +
-          `${requiredRestBreaks(worked, band) === 1 ? 'break' : 'breaks'}. Rest breaks are on ` +
-          'the employer clock, so working through them is unpaid work.',
-        citation: limits.restCitation,
-        owedCents: centsForMinutes(owedMinutes, wageCents),
-      });
-    }
-
     const hours = hourLimits[band][schoolWeek ? 'school' : 'nonschool'];
     const beforeSchoolDay = isSchoolDay(profile, addDays(shift.date, 1));
     const dailyCap =

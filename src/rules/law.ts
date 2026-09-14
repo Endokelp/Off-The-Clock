@@ -94,6 +94,25 @@ export const citations = {
       'break.',
     url: wacUrl('296-125-121'),
   },
+  mealAdult: {
+    section: 'WAC 296-126-092(1) and (2)',
+    title: 'Meal periods, rest periods',
+    quote:
+      'Employees shall be allowed a meal period of at least thirty minutes which commences no ' +
+      'less than two hours nor more than five hours from the beginning of the shift. No employee ' +
+      'shall be required to work more than five consecutive hours without a meal period.',
+    url: wacUrl('296-126-092'),
+  },
+  restAdult: {
+    section: 'WAC 296-126-092(4)',
+    title: 'Meal periods, rest periods',
+    quote:
+      'Employees shall be allowed a rest period of not less than ten minutes, on the employer ' +
+      'time, for each four hours of working time. Rest periods shall be scheduled as near as ' +
+      'possible to the midpoint of the work period. No employee shall be required to work more ' +
+      'than three hours without a rest period.',
+    url: wacUrl('296-126-092'),
+  },
   minimumWage: {
     section: 'WAC 296-125-081',
     title: 'Minimum wages, minors',
@@ -125,6 +144,10 @@ export const overtimeThresholdHours = 40;
 export const overtimePremiumMultiplier = 0.5;
 
 export type AgeBand = 'under16' | 'teen';
+
+// The hour caps only reach minors, but the break rules reach everyone, so anyone who has turned
+// 18 while logging shifts keeps getting checked against the adult sections.
+export type WorkerBand = AgeBand | 'adult';
 
 export type HourLimits = {
   maxHoursSchoolDayBeforeSchoolDay: number;
@@ -196,7 +219,7 @@ export type BreakLimits = {
   restCitation: Citation;
 };
 
-export const breakLimits: Record<AgeBand, BreakLimits> = {
+export const breakLimits: Record<WorkerBand, BreakLimits> = {
   under16: {
     maxMinutesBeforeMeal: hours(4),
     requiredMealMinutes: 30,
@@ -217,5 +240,14 @@ export const breakLimits: Record<AgeBand, BreakLimits> = {
     restBreakThresholdMinutes: hours(4),
     mealCitation: citations.mealTeen,
     restCitation: citations.restTeen,
+  },
+  adult: {
+    maxMinutesBeforeMeal: hours(5),
+    requiredMealMinutes: 30,
+    maxMinutesBeforeRest: hours(3),
+    requiredRestMinutes: 10,
+    restBreakThresholdMinutes: hours(4),
+    mealCitation: citations.mealAdult,
+    restCitation: citations.restAdult,
   },
 };

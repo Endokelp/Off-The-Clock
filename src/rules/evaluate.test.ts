@@ -221,3 +221,38 @@ test('every violation carries a citation with a section and a link', () => {
     assert.ok(violation.citation.quote.length > 40);
   }
 });
+
+test('someone who has turned 18 is cited to the adult break rules', () => {
+  const grownUp: Profile = { ...profile, birthDate: '2007-03-02' };
+  const found = assess(
+    [
+      shift({
+        id: 'a',
+        date: '2026-07-13',
+        startMinutes: 9 * 60,
+        endMinutes: 17 * 60,
+        unpaidBreakMinutes: 30,
+      }),
+    ],
+    grownUp,
+  ).violations;
+  assert.ok(found.length > 0, 'expected the adult break rules to still apply');
+  for (const violation of found) {
+    assert.ok(
+      !violation.citation.section.startsWith('WAC 296-125'),
+      `an adult was cited to a minors only rule: ${violation.citation.section}`,
+    );
+  }
+  assert.ok(found.some((violation) => violation.citation.section.startsWith('WAC 296-126-092')));
+});
+
+test('an adult is not held to the minor hour caps', () => {
+  const grownUp: Profile = { ...profile, birthDate: '2007-03-02' };
+  const found = codes(
+    [shift({ id: 'a', date: '2026-09-14', startMinutes: 6 * 60, endMinutes: 23 * 60 })],
+    grownUp,
+  );
+  assert.ok(!found.includes('daily-hours'));
+  assert.ok(!found.includes('started-too-early'));
+  assert.ok(!found.includes('ended-too-late'));
+});
