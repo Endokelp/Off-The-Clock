@@ -21,7 +21,9 @@ Washington rules engine, violation detail with the quoted statute behind each on
 total of what you are owed, the record screen with both purchase rails wired to RevenueCat, and
 saving the record as a PDF. Shifts are stored on the device.
 
-Not built yet: the app icon and the submission materials.
+Not built yet: nothing inside the app. What is left is outside the code. A RevenueCat project has
+to exist before any purchase can run, and the demo video has to be shot. Both are tracked in
+`submission/`.
 
 ## How it works
 
@@ -110,6 +112,15 @@ Requires Node and the Expo tooling. Android only.
 ```
 npm install
 npx expo run:android
+```
+
+The icon is drawn rather than stored. `tools/icon.mjs` writes the mark as SVG and every size is
+rendered from that one source, so a change to the mark is a change to one file:
+
+```
+node tools/icon.mjs full       | rsvg-convert -w 1024 -h 1024 -o assets/icon.png
+node tools/icon.mjs foreground | rsvg-convert -w 512  -h 512  -o assets/android-icon-foreground.png
+node tools/icon.mjs mono       | rsvg-convert -w 512  -h 512  -o assets/android-icon-monochrome.png
 ```
 
 ## License
