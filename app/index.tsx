@@ -112,6 +112,17 @@ export default function Home() {
           </View>
         )}
 
+        {shifts.length > 0 && (
+          <List.Item
+            title="Your record"
+            description="Every shift and every rule broken, in one place"
+            left={(props) => <List.Icon {...props} icon="file-document-outline" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => router.push('/export')}
+            style={styles.row}
+          />
+        )}
+
         <Divider style={styles.divider} />
         <Button mode="text" onPress={() => router.push('/settings')} style={styles.settings}>
           About you
