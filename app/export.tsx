@@ -1,28 +1,23 @@
+import { File, Paths } from 'expo-file-system';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import { useMemo, useState } from 'react';
 import { ScrollView, Share, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Card, Divider, Text, useTheme } from 'react-native-paper';
 
 import { space } from '../src/palette.ts';
 import { usePurchase } from '../src/purchases.tsx';
-import { assess, formatDollars, formatHours, type Assessment, type Shift } from '../src/rules/evaluate.ts';
+import { recordHtml } from '../src/record.ts';
+import {
+  assess,
+  formatClock,
+  formatDay,
+  formatDollars,
+  formatHours,
+  type Assessment,
+  type Shift,
+} from '../src/rules/evaluate.ts';
 import { isProfileComplete, useStore } from '../src/store.tsx';
-
-const dayLabel = (isoDate: string) =>
-  new Date(`${isoDate}T00:00:00Z`).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-
-// A shift that runs past midnight has an end time past 1440, which still belongs on the clock of
-// the day it started.
-const clock = (minutes: number) => {
-  const onClock = ((minutes % 1440) + 1440) % 1440;
-  const hour = Math.floor(onClock / 60);
-  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-  return `${hour12}:${String(onClock % 60).padStart(2, '0')} ${hour < 12 ? 'am' : 'pm'}`;
-};
 
 export default function Export() {
   const { shifts, profile } = useStore();
@@ -40,7 +35,7 @@ export default function Export() {
   const covers =
     ordered.length === 0
       ? 'Nothing logged yet'
-      : `${dayLabel(ordered[0].date)} to ${dayLabel(ordered[ordered.length - 1].date)}`;
+      : `${formatDay(ordered[0].date)} to ${formatDay(ordered[ordered.length - 1].date)}`;
 
   if (!ready) {
     return (
@@ -54,6 +49,33 @@ export default function Export() {
     setWorking(true);
     setProblem(await action());
     setWorking(false);
+  };
+
+  const save = async (): Promise<string | null> => {
+    if (result === null) {
+      return 'Add your birth date and hourly wage in settings first, or there is no money to record.';
+    }
+    if (!(await Sharing.isAvailableAsync())) {
+      return 'This phone has nothing to open a PDF with.';
+    }
+    try {
+      const { uri } = await Print.printToFileAsync({
+        html: recordHtml(ordered, profile, result, new Date()),
+      });
+      // expo-print names the file with a random identifier, and that name is what the share
+      // sheet and the app it lands in both display. The record goes out saying what it is.
+      // The synchronous move is deliberate: the promise returned by the async one never settles
+      // here, which leaves the button spinning forever.
+      const file = new File(uri);
+      file.moveSync(new File(Paths.cache, 'off-the-clock-record.pdf'), { overwrite: true });
+      await Sharing.shareAsync(file.uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Your record of shifts worked',
+      });
+      return null;
+    } catch {
+      return 'The record could not be written. Check that the phone has storage free.';
+    }
   };
 
   const share = async () => {
@@ -82,7 +104,28 @@ export default function Export() {
       <Divider style={styles.divider} />
 
       {unlocked ? (
-        <Record ordered={ordered} result={result} />
+        <View style={styles.block}>
+          <Button
+            mode="contained"
+            icon="file-pdf-box"
+            onPress={() => run(save)}
+            loading={working}
+            disabled={working || ordered.length === 0}
+            contentStyle={styles.actionInside}
+          >
+            Save this record as a PDF
+          </Button>
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+            A dated document listing every shift, every rule broken, and the statute behind each
+            one. Send it to a parent, keep it, or hand it to a manager.
+          </Text>
+          {problem !== null && (
+            <Text variant="bodyMedium" style={{ color: theme.colors.error }}>
+              {problem}
+            </Text>
+          )}
+          <Record ordered={ordered} result={result} />
+        </View>
       ) : (
         <Locked
           configured={configured}
@@ -193,7 +236,7 @@ const Record = ({ ordered, result }: { ordered: Shift[]; result: Assessment | nu
             <Card.Content style={styles.cardInside}>
               <Text variant="titleSmall">{shift.employer || 'Shift'}</Text>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                {dayLabel(shift.date)}, {clock(shift.startMinutes)} to {clock(shift.endMinutes)},{' '}
+                {formatDay(shift.date)}, {formatClock(shift.startMinutes)} to {formatClock(shift.endMinutes)},{' '}
                 {formatHours(shift.endMinutes - shift.startMinutes - shift.mealBreakMinutes)} worked
               </Text>
               {against.map((violation, index) => (
