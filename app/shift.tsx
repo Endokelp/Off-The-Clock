@@ -5,17 +5,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, HelperText, SegmentedButtons, Text, TextInput, useTheme } from 'react-native-paper';
 
 import { space } from '../src/palette.ts';
-import { formatHours, minutesWorkedIn, type Shift } from '../src/rules/evaluate.ts';
+import { formatHours, minutesWorkedIn, todayIso, type Shift } from '../src/rules/evaluate.ts';
 import { useStore } from '../src/store.tsx';
-
-const todayIso = () => {
-  const now = new Date();
-  return [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0'),
-  ].join('-');
-};
 
 const clockLabel = (minutes: number) => {
   const wrapped = minutes % 1440;

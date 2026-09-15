@@ -131,7 +131,7 @@ const wageCentsOf = (profile: Profile) => Math.round(profile.hourlyWage * 100);
 const centsForMinutes = (minutes: number, wageCents: number) =>
   Math.round((minutes * wageCents) / 60);
 
-const formatClock = (minutes: number) => {
+export const formatClock = (minutes: number) => {
   const wrapped = ((minutes % minutesPerDay) + minutesPerDay) % minutesPerDay;
   const hour = Math.floor(wrapped / 60);
   const minute = wrapped % 60;
@@ -139,6 +139,27 @@ const formatClock = (minutes: number) => {
   const display = hour % 12 === 0 ? 12 : hour % 12;
   return `${display}:${String(minute).padStart(2, '0')}${suffix}`;
 };
+
+// Today as the user's calendar reads it. Everything else here parses dates as UTC to keep the
+// arithmetic stable, but which day it is right now is a local question.
+export const todayIso = () => {
+  const now = new Date();
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-');
+};
+
+// The record document and the screens both label a day this way, so the format lives once here
+// beside the other display helpers rather than in each screen.
+export const formatDay = (isoDate: string) =>
+  new Date(`${isoDate}T00:00:00Z`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 
 export const formatHours = (minutes: number) => {
   const whole = Math.floor(minutes / 60);
