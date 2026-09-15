@@ -185,7 +185,6 @@ const Record = ({ ordered, result }: { ordered: Shift[]; result: Assessment | nu
   const theme = useTheme();
   return (
     <View style={styles.block}>
-      <Text variant="titleMedium">Your record</Text>
       {ordered.map((shift) => {
         const against =
           result?.violations.filter((violation) => violation.shiftId === shift.id) ?? [];
