@@ -112,6 +112,15 @@ export default function Home() {
           </View>
         )}
 
+        <List.Item
+          title="Scan a posted schedule"
+          description="Read the days and hours off a photo instead of typing them"
+          left={(props) => <List.Icon {...props} icon="camera-outline" />}
+          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          onPress={() => router.push('/scan')}
+          style={styles.row}
+        />
+
         {shifts.length > 0 && (
           <List.Item
             title="Your record"

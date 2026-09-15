@@ -57,6 +57,9 @@ type Store = {
   shifts: Shift[];
   profile: Profile;
   saveShift: (shift: Shift) => void;
+  // A scan produces several shifts at once. They are added together because saveShift called in
+  // a loop would build every write from the same captured list and keep only the last one.
+  addShifts: (incoming: Shift[]) => void;
   removeShift: (id: string) => void;
   saveProfile: (profile: Profile) => void;
 };
@@ -91,6 +94,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
           ? shifts.map((existing) => (existing.id === shift.id ? shift : existing))
           : [...shifts, shift],
       ),
+    addShifts: (incoming) => writeShifts([...shifts, ...incoming]),
     removeShift: (id) => writeShifts(shifts.filter((existing) => existing.id !== id)),
     saveProfile: (next) => {
       setProfile(next);

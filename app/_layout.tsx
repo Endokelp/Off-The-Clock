@@ -36,6 +36,7 @@ export default function RootLayout() {
             >
               <Stack.Screen name="index" options={{ title: 'Off the Clock' }} />
               <Stack.Screen name="shift" options={{ title: 'Add a shift' }} />
+              <Stack.Screen name="scan" options={{ title: 'Scan a schedule' }} />
               <Stack.Screen name="settings" options={{ title: 'About you' }} />
               <Stack.Screen name="export" options={{ title: 'Your record' }} />
             </Stack>

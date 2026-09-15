@@ -22,7 +22,9 @@
       "expo-router",
       "@react-native-community/datetimepicker",
       "@react-native-vector-icons/material-design-icons",
-      "expo-font"
+      "expo-font",
+      "expo-sharing",
+      "expo-image-picker"
     ]
   }
 }
