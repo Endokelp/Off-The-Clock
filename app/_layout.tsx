@@ -5,6 +5,7 @@ import { useColorScheme } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { PurchaseProvider } from '../src/purchases.tsx';
 import { StoreProvider } from '../src/store.tsx';
 import { darkTheme, lightTheme } from '../src/theme.ts';
 
@@ -23,19 +24,22 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
         <StoreProvider>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: theme.colors.background },
-              headerTintColor: theme.colors.onSurface,
-              headerShadowVisible: false,
-              contentStyle: { backgroundColor: theme.colors.background },
-            }}
-          >
-            <Stack.Screen name="index" options={{ title: 'Off the Clock' }} />
-            <Stack.Screen name="shift" options={{ title: 'Add a shift' }} />
-            <Stack.Screen name="settings" options={{ title: 'About you' }} />
-          </Stack>
+          <PurchaseProvider>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+            <Stack
+              screenOptions={{
+                headerStyle: { backgroundColor: theme.colors.background },
+                headerTintColor: theme.colors.onSurface,
+                headerShadowVisible: false,
+                contentStyle: { backgroundColor: theme.colors.background },
+              }}
+            >
+              <Stack.Screen name="index" options={{ title: 'Off the Clock' }} />
+              <Stack.Screen name="shift" options={{ title: 'Add a shift' }} />
+              <Stack.Screen name="settings" options={{ title: 'About you' }} />
+              <Stack.Screen name="export" options={{ title: 'Your record' }} />
+            </Stack>
+          </PurchaseProvider>
         </StoreProvider>
       </PaperProvider>
     </SafeAreaProvider>
