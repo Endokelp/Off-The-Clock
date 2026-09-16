@@ -22,8 +22,7 @@ total of what you are owed, the record screen with both purchase rails wired to 
 saving the record as a PDF. Shifts are stored on the device.
 
 Not built yet: nothing inside the app. What is left is outside the code. A RevenueCat project has
-to exist before any purchase can run, and the demo video has to be shot. Both are tracked in
-`submission/`.
+to exist before any purchase can run, which is what the setup section below describes.
 
 ## How it works
 

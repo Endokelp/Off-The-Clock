@@ -17,3 +17,8 @@ ios/
 expo-env.d.ts
 .metro-health-check*
 *.tsbuildinfo
+
+# Agent rules. Local only, not part of the app.
+AGENTS.md
+CLAUDE.md
+.cursor/
